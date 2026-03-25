@@ -1,0 +1,16 @@
+[project]
+name = "syllable-stress-el"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "cmudict>=1.1.3",
+    "pronouncing>=0.2.0",
+    "pyhyphen>=1.4.0",
+    "setuptools>=82.0.1",
+    "syllabreak",
+]
+
+[tool.uv.sources]
+syllabreak = { git = "https://github.com/apakabarlabs/syllabreak-python.git" }
