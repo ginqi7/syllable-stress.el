@@ -36,14 +36,15 @@
   :type 'string)
 
 (defcustom syllable-stress-minimum-syllables 3
-  ""
+  "Minimum number of syllables a word must have to display stress markers."
   :type 'int)
 
 (setq syllable-stress-python "uv run")
 
 ;;; Internal Variables
 
-(defvar syllable-stress--ovs nil)
+(defvar syllable-stress--ovs nil
+  "List of overlays used for rendering syllable stress markers.")
 
 ;;; Commands
 
@@ -71,9 +72,22 @@
   (websocket-bridge-app-open-buffer "syllable-stress"))
 
 (defun syllable-stress--name (symbol)
+  "Extract the name from SYMBOL by removing the leading character.
+
+SYMBOL is a symbol whose name starts with a prefix character (usually
+a dash or quote); this function returns the name with the first
+character stripped off."
   (substring (symbol-name symbol) 1))
 
 (defun syllable-stress-render-word (&rest args)
+  "Render syllable stress markers on a word in the current buffer.
+
+ARGS is a list containing a single element: an alist mapping a word
+(symbol) to its syllable stress data. Each syllable entry contains
+the syllable length and stress level (1 = secondary, 2 = primary).
+
+Creates overlays on matching text in the visible window to highlight
+syllables with different faces based on stress level."
   (let* ((syllable-stress (car args))
          (word (syllable-stress--name (car syllable-stress)))
          (beg)
@@ -91,17 +105,27 @@
           (setq beg end))))))
 
 (defun syllable-stress-render-string (str)
-  ""
+  "Send string STR to the Python backend for syllable stress analysis.
+
+Calls the Python service via WebSocket to analyze and render stress
+markers on words in STR."
   (interactive)
   (websocket-bridge-call "syllable-stress" "render-string" str))
 
 (defun syllable-stress-render-window ()
-  ""
+  "Render syllable stress markers for all text in the current window.
+
+Clears any existing stress overlays and sends the visible buffer
+content to the Python backend for analysis and rendering."
   (interactive)
   (syllable-stress-clear-ovs)
   (syllable-stress-render-string (buffer-substring-no-properties (window-start) (window-end))))
 
 (defun syllable-stress-clear-ovs ()
+  "Clear all syllable stress overlays from the current buffer.
+
+Removes and deletes all overlays stored in `syllable-stress--ovs`
+and resets the overlay list to nil."
   (interactive)
   (dolist (ov syllable-stress--ovs)
     (when (overlayp ov)
