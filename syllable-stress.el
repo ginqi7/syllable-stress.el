@@ -81,7 +81,7 @@
          (ov))
     (save-excursion
       (goto-char (window-start))
-      (while (search-forward word (window-end) t)
+      (while (re-search-forward (concat "\\b" (regexp-quote word) "\\b") (window-end) t)
         (setq beg (- (point) (length word)))
         (dolist (syllable (nth 1 syllable-stress))
           (setq end (+ beg (car syllable)))

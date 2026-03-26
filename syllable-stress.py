@@ -31,6 +31,16 @@ def get_stress(phone: str):
 
 
 def analyze_word(word: str):
+    """Analyze word syllables and stress patterns using CMU Pronouncing Dictionary.
+
+    Args:
+        word: The word to analyze.
+
+    Returns:
+        A list of dictionaries mapping syllables to their stress values (0-2),
+        where 0 = unstressed, 1 = secondary stress, 2 = primary stress.
+        Returns None if the word is not found in the dictionary.
+    """
     w = word.lower()
     prons = CMU.get(w, [])
     if not prons:
@@ -48,8 +58,18 @@ def analyze_word(word: str):
 
 
 async def render_word(word: str):
+    """Render stress markers for a word in Emacs if it meets the minimum syllable count.
+
+    Analyzes the word's syllable stress pattern and calls Emacs to render the
+    stress markers visually. Only renders words that have at least
+    `minimum_syllables` syllables.
+
+    Args:
+        word: The word to render stress markers for.
+    """
     syllables_stress = analyze_word(word)
     stress_pos = []
+    # print(syllables_stress)
     if syllables_stress:
         syllable = syllables_stress[0]
         # print(syllable)
@@ -72,14 +92,31 @@ async def get_emacs_var(var_name: str):
 
 
 async def init():
-    """Initialize transcription settings from Emacs variables, select and instantiate the configured transcription backend, display startup status information, and launch the asynchronous transcription loop."""
+    """Initialize syllable stress settings from Emacs variables.
+
+    Fetches configuration values from Emacs, including the minimum syllable
+    threshold for rendering stress markers. Prints a startup message when
+    initialization is complete.
+    """
     global minimum_syllables
     minimum_syllables = int(await get_emacs_var("syllable-stress-minimum-syllables"))
     print("Syllable Stress started.")
 
 
 def handle_arg_types(arg):
-    """Convert Lisp-style quoted string arguments into symbols when needed and return the argument wrapped as a quoted S-expression."""
+    """Convert Lisp-style quoted string arguments into symbols when needed.
+
+    Processes arguments for conversion to S-expressions. If the argument is a
+    string starting with a single quote, it extracts the quoted content and
+    converts it to a symbol. Otherwise, wraps the argument as a quoted
+    S-expression.
+
+    Args:
+        arg: The argument to process.
+
+    Returns:
+        A sexpdata.Quoted wrapper around the processed argument.
+    """
     if isinstance(arg, str) and arg.startswith("'"):
         arg = sexpdata.Symbol(arg.partition("'")[2])
     # print(arg)
@@ -88,7 +125,15 @@ def handle_arg_types(arg):
 
 
 async def eval_in_emacs(method_name, args):
-    """Build an Emacs Lisp S-expression from the method name and processed arguments, serialize it, and asynchronously evaluate it in Emacs through the bridge."""
+    """Evaluate an Emacs Lisp function call via the websocket bridge.
+
+    Builds an S-expression from the method name and arguments, serializes it
+    to Lisp syntax, and sends it to Emacs for evaluation.
+
+    Args:
+        method_name: The name of the Emacs Lisp function to call.
+        args: List of arguments to pass to the function.
+    """
     args = [sexpdata.Symbol(method_name)] + list(map(handle_arg_types, args))  # type: ignore
     sexp = sexpdata.dumps(args)
     print(sexp)
@@ -96,7 +141,19 @@ async def eval_in_emacs(method_name, args):
 
 
 async def on_message(message):
-    """Parse an incoming message payload, dispatch the toggle command to recording control when requested, report unknown commands, and print a traceback if processing fails."""
+    """Handle incoming WebSocket messages from Emacs.
+
+    Parses JSON messages and dispatches commands. Currently supports:
+    - "render-string": Extracts words from the string and renders stress markers
+      for each unique word.
+
+    Args:
+        message: The raw WebSocket message string containing JSON.
+
+    Note:
+        Prints a message for unrecognized commands and logs any tracebacks
+        when processing fails.
+    """
     try:
         info = json.loads(message)
         print(info)
@@ -105,6 +162,7 @@ async def on_message(message):
             str = info[1][1].strip()
             words = re.findall(r"[A-Za-z]+", str)
             words = list(set(words))
+            # print(words)
             for word in words:
                 await render_word(word)
 
@@ -118,7 +176,12 @@ async def on_message(message):
 
 
 async def main():
-    """Register the message handler with the websocket bridge, initialize transcription services, and run initialization and bridge startup concurrently."""
+    """Main entry point for the syllable stress service.
+
+    Registers the message handler with the WebSocket bridge, initializes
+    transcription services, and runs initialization and bridge startup
+    concurrently.
+    """
     global bridge
     bridge = websocket_bridge_python.bridge_app_regist(on_message)
     await asyncio.gather(init(), bridge.start())
