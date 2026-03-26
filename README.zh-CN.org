@@ -2,37 +2,120 @@
 #+author: Qiqi Jin
 #+language: zh
 
+#+HTML: <a href ="https://github.com/ginqi7/syllable-stress.el/blob/master/README.org"><img src="https://img.shields.io/badge/README-English-555555.svg"/></a>
+
 * 概述
 
-* 前提
+Syllable Stress 是一个 Emacs 包，用于在文本中可视化音节重音模式。它使用 CMU 发音词典和 syllabreak-python 来分析单词，并使用覆盖层在缓冲区中直接显示重音标记。
 
-** 需要的 Emacs 包
+启用后，多音节单词会被高亮显示以展示：
+- 主重音（级别 2）
+- 次要重音（级别 1）
 
-** 安装
-+ 克隆项目到你自己的 Emacs 配置目录下：
+这对于语言学习者、研究格律的诗人或任何对英语发音模式感兴趣的人都很有用。
+
+* 前提条件
+
+- Python 3.8+
+- uv（Python 包管理器）
+- websocket-bridge（Elisp 包）
+
+* 安装
+
+** 克隆仓库
 #+BEGIN_SRC sh
-  git clone https://github.com/ginqi7/syllable-stress.el ~/.emacs.d/lisp/syllable-stress;
+  git clone https://github.com/ginqi7/syllable-stress.el ~/.emacs.d/lisp/syllable-stress
 #+END_SRC
 
-+ 把克隆的路径添加到 =load-path= 当中
+** 添加到 load-path
+将以下内容添加到你的 Emacs 配置中：
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/lisp/syllable-stress")
 #+END_SRC
 
+** 安装 Python 依赖
+该包使用 =uv= 进行依赖管理。进入包目录并同步：
+#+BEGIN_SRC sh
+  cd ~/.emacs.d/lisp/syllable-stress
+  uv sync
+#+END_SRC
+
+安装的依赖：
+- =syllabreak= - 音节分割
+- =cmudict= - CMU 发音词典
+- =sexpdata= - S 表达式解析
+- =websocket_bridge_python= - Emacs-Python 通信
+
 * 配置
 
+** 基本设置
 #+BEGIN_SRC emacs-lisp
   (require 'syllable-stress)
-#+end_src
+#+END_SRC
 
 ** 变量
 
-| 变量 | 默认值 | 解释 |
-|------+--------+------|
-|      |        |      |
+| 变量名称                               | 默认值        | 描述                                               |
+|----------------------------------------+---------------+----------------------------------------------------|
+| =syllable-stress-python=                | =python3=      | Python 解释器命令                                   |
+| =syllable-stress-minimum-syllables=     | =3=            | 显示重音标记所需的最小音节数                         |
 
-* 特性
+配置示例：
+#+BEGIN_SRC emacs-lisp
+  (setq syllable-stress-minimum-syllables 2)  ; 为 2 个音节以上的单词显示重音
+#+END_SRC
 
-* 例子
+* 使用方法
 
-* Footnotes
+** 命令
+
+| 命令                               | 快捷键 | 描述                               |
+|------------------------------------+--------+------------------------------------|
+| =syllable-stress-start=             | M-x    | 启动音节重音服务                   |
+| =syllable-stress-stop=              | M-x    | 停止服务                           |
+| =syllable-stress-restart=           | M-x    | 重启服务                           |
+| =syllable-stress-render-window=     | M-x    | 在当前窗口中渲染重音标记           |
+| =syllable-stress-clear-ovs=         | M-x    | 清除所有重音标记                   |
+
+** 示例工作流程
+
+1. 启动服务：
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-start
+   #+END_SRC
+
+2. 导航到包含文本的缓冲区（例如 Org 模式、文本模式）
+
+3. 为可见文本渲染重音标记：
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-render-window
+   #+END_SRC
+
+4. 完成后清除标记：
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-clear-ovs
+   #+END_SRC
+
+* 示例
+
+在对包含 "beautiful" 或 "pronunciation" 等单词的文本运行 =syllable-stress-render-window= 后，覆盖层将根据重音级别用不同颜色高亮显示音节。
+
+* 故障排除
+
+** 服务无法启动
+- 确保 =uv= 已安装并在 PATH 中
+- 在包目录中运行 =uv sync= 安装依赖
+- 检查 =*syllable-stress*= 缓冲区查看错误信息
+
+** 没有显示重音标记
+- 确认单词至少有 =syllable-stress-minimum-syllables= 个音节
+- 检查单词是否存在于 CMU 词典中（某些专有名词可能未包含）
+
+* 许可证
+
+本程序是自由软件；你可以根据自由软件基金会发布的 GNU 通用公共许可证条款重新分发和/或修改它，许可证版本为第 3 版或（由你选择）任何更新的版本。
+
+* 脚注
+
+[fn:1] CMU 发音词典：https://github.com/cmusphinx/cmudict
+[fn:2] syllabreak-python: https://github.com/apakabarlabs/syllabreak-python
