@@ -6,32 +6,116 @@
 
 * Overview
 
+Syllable Stress is an Emacs package that visualizes syllable stress patterns in text. It uses the CMU Pronouncing Dictionary and syllabreak-python to analyze words and display stress markers directly in your buffer using overlays.
+
+When enabled, words with multiple syllables are highlighted to show:
+- Primary stress (level 2)
+- Secondary stress (level 1)
+
+This is particularly useful for language learners, poets working with meter, or anyone interested in English pronunciation patterns.
+
 * Prerequisites
 
-** Install
-+ clone the project in your own emacs configuration files directory, like:
-  #+BEGIN_SRC sh
-    git clone https://github.com/ginqi7/syllable-stress.el ~/.emacs.d/lisp/syllable-stress;
-  #+END_SRC
+- Python 3.8+
+- uv (Python package manager)
+- websocket-bridge (Elisp package)
 
-+ add the path to 'load-path'
-  #+BEGIN_SRC emacs-lisp
-    (add-to-list 'load-path "~/.emacs.d/lisp/syllable-stress")
-  #+END_SRC
+* Installation
+
+** Clone the repository
+#+BEGIN_SRC sh
+  git clone https://github.com/ginqi7/syllable-stress.el ~/.emacs.d/lisp/syllable-stress
+#+END_SRC
+
+** Add to load-path
+Add the following to your Emacs configuration:
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/lisp/syllable-stress")
+#+END_SRC
+
+** Install Python dependencies
+The package uses =uv= for dependency management. Navigate to the package directory and sync:
+#+BEGIN_SRC sh
+  cd ~/.emacs.d/lisp/syllable-stress
+  uv sync
+#+END_SRC
+
+Dependencies installed:
+- =syllabreak= - Syllable segmentation
+- =cmudict= - CMU Pronouncing Dictionary
+- =sexpdata= - S-expression parsing
+- =websocket_bridge_python= - Emacs-Python communication
 
 * Configuration
-Here are a few variables that can be used for configuration:
+
+** Basic setup
 #+BEGIN_SRC emacs-lisp
   (require 'syllable-stress)
-#+end_src
+#+END_SRC
 
 ** Variables
-| variable | default value | explain |
-|----------+---------------+---------|
-|          |               |         |
 
-* Features
+| Variable                               | Default Value | Description                                      |
+|----------------------------------------+---------------+--------------------------------------------------|
+| =syllable-stress-python=                | =python3=       | Python interpreter command                         |
+| =syllable-stress-minimum-syllables=     | =3=             | Minimum syllables required to display stress markers |
+
+Example configuration:
+#+BEGIN_SRC emacs-lisp
+  (setq syllable-stress-minimum-syllables 2)  ; Show stress for words with 2+ syllables
+#+END_SRC
+
+* Usage
+
+** Commands
+
+| Command                    | Keybinding | Description                          |
+|----------------------------+------------+--------------------------------------|
+| =syllable-stress-start=     | M-x        | Start the syllable stress service    |
+| =syllable-stress-stop=      | M-x        | Stop the service                     |
+| =syllable-stress-restart=   | M-x        | Restart the service                  |
+| =syllable-stress-render-window= | M-x        | Render stress markers in current window |
+| =syllable-stress-clear-ovs= | M-x        | Clear all stress markers             |
+
+** Example workflow
+
+1. Start the service:
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-start
+   #+END_SRC
+
+2. Navigate to a buffer with text (e.g., Org mode, text mode)
+
+3. Render stress markers for visible text:
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-render-window
+   #+END_SRC
+
+4. Clear markers when done:
+   #+BEGIN_SRC emacs-lisp
+     M-x syllable-stress-clear-ovs
+   #+END_SRC
 
 * Example
 
+After running =syllable-stress-render-window= on text containing words like "beautiful" or "pronunciation", overlays will highlight syllables with different colors based on stress level.
+
+* Troubleshooting
+
+** Service fails to start
+- Ensure =uv= is installed and in PATH
+- Run =uv sync= in the package directory to install dependencies
+- Check the =*syllable-stress*= buffer for error messages
+
+** No stress markers appear
+- Verify the word has at least =syllable-stress-minimum-syllables= syllables
+- Check that the word exists in the CMU dictionary (some proper nouns may not be included)
+
+* License
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
 * Footnotes
+
+[fn:1] CMU Pronouncing Dictionary: https://github.com/cmusphinx/cmudict
+[fn:2] syllabreak-python: https://github.com/apakabarlabs/syllabreak-python
